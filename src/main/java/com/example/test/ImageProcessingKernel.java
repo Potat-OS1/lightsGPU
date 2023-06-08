@@ -10,15 +10,21 @@ public class ImageProcessingKernel extends Kernel {
     int maxX, maxY;
     int shadowLevel;
 
+    //this one is here just for posterity if i choose to use it in the future.
     ImageProcessingKernel (int[][][] base, int[][][] overlay, int x, int y) {
-        this.base = base;
-        this.overlay = overlay;
+        assignWorkload(base, overlay, x, y);
         maxX = overlay.length;
         maxY = overlay[0].length;
-        result = base;
-        this.x = x;
-        this.y = y;
         shadowLevel = App.shadowLevel;
+    }
+
+    ImageProcessingKernel (int[][][] base) {
+        this.result = base;
+    }
+
+    //this is to be used in the update loop in this project to "reset" without created a new object of this kernel. hopefully.
+    public void setResult (int[][][] input) {
+        this.result = input;
     }
 
     public void assignWorkload (int[][][] base, int[][][] overlay, int x, int y) {
@@ -38,10 +44,8 @@ public class ImageProcessingKernel extends Kernel {
     @Override
     public void run() {
         int gid = getGlobalId();
-        //this system.out is apparently loadbearing.
-        //System.out.println();
-        int a = gid % maxX;
-        int b = gid / maxY;
+        int a = gid % overlay.length;
+        int b = gid / overlay[0].length;
 
         //x or y should not be more than the bounds of the screen.
         if ((a + x) >= base.length || (b + y) >= base[0].length) {

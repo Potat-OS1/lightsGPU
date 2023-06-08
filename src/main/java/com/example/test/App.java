@@ -1,6 +1,7 @@
 package com.example.test;
 
 import com.aparapi.Range;
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -11,12 +12,19 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Objects;
 
 
 public class App extends Application {
     int size = 300;
     public static int shadowLevel = 178;
+    public static WritableImage base;
+    public static int[][][] baseMatrix;
+    public static ArrayList<Light> lightList = new ArrayList<>();
+    public static Pane lightPane = new Pane();
+
     public static void main (String[] args) {
         launch(args);
     }
@@ -26,25 +34,16 @@ public class App extends Application {
         ImageView iv = new ImageView(new Image(Objects.requireNonNull(App.class.getResourceAsStream("/image.jpg"))));
         iv.setFitHeight(300);
         iv.setFitWidth(300);
-        WritableImage base = createImage(new Color(0.0, 0.0, 0.0, 0.7), size, size);
-        WritableImage wi1 = imageGradientToBlack(new Color(0.0, 0.0, 1.0, 1.0), 150, 150, 100, 0.0);
-        WritableImage wi2 = imageGradientToBlack(new Color(0.0, 1.0, 0.0, 1.0), 150, 150, 100, 0.0);
-        WritableImage wi3 = imageGradientToBlack(new Color(1.0, 0.0, 0.0, 1.0), 150, 150, 100, 0.0);
+        base = createImage(new Color(0.0, 0.0, 0.0, 0.7), size, size);
+        baseMatrix = imageArray(base);
+        lightList.add(new Light(new Color(0.0, 0.0, 1.0, 1.0), 100, 100));
+        lightList.add(new Light(new Color(0.0, 1.0, 0.0, 1.0), 150, 150));
+        lightList.add(new Light(new Color(1.0, 0.0, 0.0, 1.0), 125, 125));
 
-        //make more efficient in the future by looping around the overlay images bounds rather than the bases, and translate the x and y to the base instead of the overlay
-        //make also more efficient by caching each of the 3d arrays of the pictures once.
-        Range range = Range.create(150*150);
-        ImageProcessingKernel ipk = new ImageProcessingKernel(imageArray(base), imageArray(wi1), -100, 50);
-        ipk.execute(range);
-        ipk.assignWorkload(ipk.results(), imageArray(wi2), 50, 50);
-        ipk.execute(range);
-        ipk.assignWorkload(ipk.results(), imageArray(wi3), 75, 100);
-        ipk.execute(range);
+        Pane p = new Pane(iv, lightPane);
+        AnimationTimer timer = new Update();
+        timer.start();
 
-
-        Pane p = new Pane(iv, new ImageView(arrayToImage(ipk.results())));
-        //Pane p = new Pane(new ImageView(combineImages(imageArray(wi1), imageArray(wi2))));
-        ipk.dispose();
         Scene scene = new Scene(p);
         stage.setScene(scene);
         stage.show();
@@ -122,7 +121,7 @@ public class App extends Application {
         return wi;
     }
 
-    private Image arrayToImage (int[][][] info) {
+    public static Image arrayToImage (int[][][] info) {
         WritableImage wi = new WritableImage(info.length, info[0].length);
         for (int a = 0; a < wi.getWidth(); a++) {
             for (int b = 0; b < wi.getHeight(); b++) {
@@ -132,7 +131,7 @@ public class App extends Application {
         return wi;
     }
 
-    private int[][][] imageArray (WritableImage wi) {
+    public static int[][][] imageArray(WritableImage wi) {
         int[][][] pixelArray = new int[(int) wi.getWidth()][(int) wi.getHeight()][4];
         int c;
         for (int a = 0; a < wi.getWidth(); a++) {
