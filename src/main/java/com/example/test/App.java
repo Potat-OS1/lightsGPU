@@ -11,8 +11,6 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -20,10 +18,9 @@ import java.util.Objects;
 public class App extends Application {
     int size = 300;
     public static int shadowLevel = 178;
-    public static WritableImage base;
-    public static int[][][] baseMatrix;
     public static ArrayList<Light> lightList = new ArrayList<>();
     public static Pane lightPane = new Pane();
+    public static Light background;
 
     public static void main (String[] args) {
         launch(args);
@@ -34,11 +31,10 @@ public class App extends Application {
         ImageView iv = new ImageView(new Image(Objects.requireNonNull(App.class.getResourceAsStream("/image.jpg"))));
         iv.setFitHeight(300);
         iv.setFitWidth(300);
-        base = createImage(new Color(0.0, 0.0, 0.0, 0.7), size, size);
-        baseMatrix = imageArray(base);
-        lightList.add(new Light(new Color(0.0, 0.0, 1.0, 1.0), 100, 100));
-        lightList.add(new Light(new Color(0.0, 1.0, 0.0, 1.0), 150, 150));
-        lightList.add(new Light(new Color(1.0, 0.0, 0.0, 1.0), 125, 125));
+        background = new Light(new Color(0.0, 0.0, 0.0, 0.7), 0, 0, false, 300, 300);
+        lightList.add(new Light(new Color(0.0, 0.0, 1.0, 1.0), 100, 100, true, 150, 150));
+        lightList.add(new Light(new Color(0.0, 1.0, 0.0, 1.0), 150, 150, true, 150, 150));
+        lightList.add(new Light(new Color(1.0, 0.0, 0.0, 1.0), 125, 125, true, 150, 150));
 
         Pane p = new Pane(iv, lightPane);
         AnimationTimer timer = new Update();
@@ -121,28 +117,41 @@ public class App extends Application {
         return wi;
     }
 
-    public static Image arrayToImage (int[][][] info) {
-        WritableImage wi = new WritableImage(info.length, info[0].length);
-        for (int a = 0; a < wi.getWidth(); a++) {
-            for (int b = 0; b < wi.getHeight(); b++) {
-                wi.getPixelWriter().setArgb(a, b, (info[a][b][0] << 24) | (info[a][b][1] << 16) | (info[a][b][2] << 8) | (info[a][b][3]));
+    public static Image arrayToImage (int[] info, int height, int width) {
+        WritableImage wi = new WritableImage(width, height);
+        int b = 0;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                wi.getPixelWriter().setArgb(x, y, (info[(b)]<<24) | (info[(b)+1]<<16) | (info[(b)+2]<<8) | info[(b)+3]);
+                //System.out.println(x + "  " + y + " color values: Alpha - " + info[b] + "  Red - " + info[b+1] + "  Blue - " + info[b+2] + "  Green - " + + info[b+3]);
             }
+            b+=4;
         }
         return wi;
     }
 
-    public static int[][][] imageArray(WritableImage wi) {
-        int[][][] pixelArray = new int[(int) wi.getWidth()][(int) wi.getHeight()][4];
-        int c;
-        for (int a = 0; a < wi.getWidth(); a++) {
-            for (int b = 0; b < wi.getHeight(); b++) {
-                c = wi.getPixelReader().getArgb(a, b);
-                pixelArray[a][b][0] = ((c >> 24) & 0xff);
-                pixelArray[a][b][1] = ((c >> 16) & 0xff);
-                pixelArray[a][b][2] = ((c >> 8) & 0xff);
-                pixelArray[a][b][3] = (c & 0xff);
-            }
+    public static int[] imageArray(WritableImage wi, int width, int height) {
+        int[] pixelArray = new int[(int) (wi.getWidth() * wi.getHeight())];
+        int c = 0;
+        System.out.println(pixelArray.length);
+        for (int a = 0; a < pixelArray.length; a+=4) {
+            c = wi.getPixelReader().getArgb(a/width, a%height);
+            pixelArray[a] = ((c >> 24) & 0xff);
+            pixelArray[a+1] = ((c >> 16) & 0xff);
+            pixelArray[a+2] = ((c >> 8) & 0xff);
+            pixelArray[a+3] = (c & 0xff);
         }
+//        int[][][] pixelArray = new int[(int) wi.getWidth()][(int) wi.getHeight()][4];
+//        int c;
+//        for (int a = 0; a < wi.getWidth(); a++) {
+//            for (int b = 0; b < wi.getHeight(); b++) {
+//                c = wi.getPixelReader().getArgb(a, b);
+//                pixelArray[a][b][0] = ((c >> 24) & 0xff);
+//                pixelArray[a][b][1] = ((c >> 16) & 0xff);
+//                pixelArray[a][b][2] = ((c >> 8) & 0xff);
+//                pixelArray[a][b][3] = (c & 0xff);
+//            }
+//        }
         return pixelArray;
     }
 }
