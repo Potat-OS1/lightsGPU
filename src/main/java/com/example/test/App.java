@@ -123,7 +123,7 @@ public class App extends Application {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 wi.getPixelWriter().setArgb(x, y, (info[(b)]<<24) | (info[(b)+1]<<16) | (info[(b)+2]<<8) | info[(b)+3]);
-                //System.out.println(x + "  " + y + " color values: Alpha - " + info[b] + "  Red - " + info[b+1] + "  Blue - " + info[b+2] + "  Green - " + + info[b+3]);
+                // System.out.println(x + "  " + y + " color values: Alpha - " + info[b] + "  Red - " + info[b+1] + "  Blue - " + info[b+2] + "  Green - " + + info[b+3]);
             }
             b+=4;
         }
