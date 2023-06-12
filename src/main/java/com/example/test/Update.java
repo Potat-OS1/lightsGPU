@@ -13,7 +13,7 @@ public class Update extends AnimationTimer {
         super.start();
         // the 1500 was necessary on my desktop but not my laptop. for whatever reason the local width is screwy on a NVIDIA 3060, but not integrated intel graphics.
         range = Range.create(150*150, 150);
-        ipk = new ImageProcessingKernel(App.background.getLightImageMatrix(), App.background.getWidth());
+        ipk = new ImageProcessingKernel(new int[300*300], App.background.getWidth());
     }
 
     @Override

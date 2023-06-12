@@ -6,7 +6,7 @@ public class ImageProcessingKernel extends Kernel {
     int[] base;
     int[] overlay;
     int[] result;
-    int x, y;
+    int a, b;
     int baseWidth;
     int baseHeight;
     int overlayWidth;
@@ -29,8 +29,8 @@ public class ImageProcessingKernel extends Kernel {
         this.overlay = overlay.lightImageMatrix;
         this.baseWidth = base.getWidth();
         this.baseHeight = base.getHeight();
-        this.x = overlay.getX();
-        this.y = overlay.getY();
+        this.a = overlay.getX();
+        this.b = overlay.getY();
         this.overlayWidth = overlay.getWidth();
         this.overlayHeight = overlay.getHeight();
     }
@@ -42,17 +42,40 @@ public class ImageProcessingKernel extends Kernel {
     @Override
     public void run() {
         int gid = getGlobalId();
-        int a = gid % baseWidth;
-        int b = gid / baseHeight;
-        if (a < x && a > baseWidth) {
+        int x = gid % baseWidth;
+        int y = gid / baseHeight;
+        if (x < a && x > baseWidth) {
             return;
         }
-        if (b < y && b > baseHeight) {
+        if (y < b && y > baseHeight) {
             return;
         }
+
+        int u = 4 * (( x + a ) + ( ( y + b ) * baseWidth ));
+        int v = 4 * ( x + ( y * overlayWidth ) );
+
+        //opacity
+        result[u] = Math.max(Math.min(base[u], overlay[v]), shadowLevel);
+        //rgb
+        result[u+1] = Math.max(base[u+1], overlay[v+1]);
+        result[u+2] = Math.max(base[u+2], overlay[v+2]);
+        result[u+3] = Math.max(base[u+3], overlay[v+3]);
+//        //
+        System.out.println("--------------------------------");
+        System.out.println(x + "  " + y);
+        System.out.println(result[u] + "  " + result[u+1] + "  " + result[u+2] + "  " + result[u+3]);
+        System.out.println(base[u] + "  " + base[u+1] + "  " + base[u+2] + "  " + base[u+3]);
+        System.out.println(overlay[v] + "  " + overlay[v+1] + "  " + overlay[v+2] + "  " + overlay[v+3]);
+
+
+
+
+
+
+
         //System.out.println(base[a+(b*baseWidth)] + " " + overlay[a+(b*overlayWidth)]);
         //result[a+(b*baseWidth)] = Math.max(base[a+(b*baseWidth)], overlay[a+(b*overlayWidth)]);
-        result[(x+(y*baseWidth))+(a+(b*baseWidth))] = Math.max();
+        //result[(x+(y*baseWidth))+(a+(b*baseWidth))] = Math.max();
 //        x or y should not be more than the bounds of the screen.
 //        if (gid % 4 == 0) {
 //            System.out.println("oi");
