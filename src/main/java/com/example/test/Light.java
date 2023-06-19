@@ -1,53 +1,46 @@
 package com.example.test;
 
+import com.aparapi.Range;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 
+import static com.example.test.App.imageGradientToBlack;
+
 public class Light {
-    int x, y, width, height;
-    WritableImage lightImage;
-    int[] lightImageMatrix;
+    private WritableImage wi;
+    private int[][][] image;
+    private int xOffset, yOffset;
+    private Range range;
 
-    Light (Color c, int x, int y, boolean useGradient, int width, int height) {
-        this.width = width;
-        this.height = height;
-        if (useGradient) {
-            lightImage = App.imageGradientToBlack(c, width, height, 100, 0.0);
-        }
-        else {
-            lightImage = new WritableImage(width, height);
-            for (int a = 0; a < lightImage.getWidth(); a++) {
-                for (int b = 0; b < lightImage.getHeight(); b++) {
-                    lightImage.getPixelWriter().setColor(a, b, c);
-                }
-            }
-        }
-        lightImageMatrix = App.imageArray(lightImage, width, height);
-        this.x = x;
-        this.y = y;
+    Light (int width, int height, Color c, int steps, double deadPercent, int xOffset, int yOffset) {
+        this.xOffset = xOffset;
+        this.yOffset = yOffset;
+        wi = imageGradientToBlack(c, width, height, steps, deadPercent);
+        image = App.imageArray(wi);
+        range = Range.create(width*height, 100);
     }
 
-    public WritableImage getLightImage () {
-        return lightImage;
+    public Range getRange () {
+        return range;
     }
 
-    public int getWidth () {
-        return width;
+    public int[][][] getImage () {
+        return image;
     }
 
-    public int getHeight () {
-        return height;
+    public void setXOffset (int xOffset) {
+        this.xOffset = xOffset;
     }
 
-    public int[] getLightImageMatrix () {
-        return lightImageMatrix;
+    public int getXOffset () {
+        return xOffset;
     }
 
-    public int getX () {
-        return x;
+    public void setYOffset (int yOffset) {
+        this.yOffset = yOffset;
     }
 
-    public int getY () {
-        return y;
+    public int getYOffset () {
+        return yOffset;
     }
 }

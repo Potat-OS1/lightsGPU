@@ -1,6 +1,5 @@
 package com.example.test;
 
-import com.aparapi.Range;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -11,6 +10,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -19,8 +19,10 @@ public class App extends Application {
     int size = 300;
     public static int shadowLevel = 178;
     public static ArrayList<Light> lightList = new ArrayList<>();
-    public static Pane lightPane = new Pane();
-    public static Light background;
+    public static int[][][] baseArray;
+    public static WritableImage base;
+    public static Pane pane = new Pane();
+
 
     public static void main (String[] args) {
         launch(args);
@@ -31,104 +33,48 @@ public class App extends Application {
         ImageView iv = new ImageView(new Image(Objects.requireNonNull(App.class.getResourceAsStream("/image.jpg"))));
         iv.setFitHeight(300);
         iv.setFitWidth(300);
-        background = new Light(new Color(0.0, 0.0, 0.0, 0.7), 0, 0, false, 300, 300);
-        lightList.add(new Light(new Color(0.0, 0.0, 1.0, 1.0), 100, 100, true, 150, 150));
-        lightList.add(new Light(new Color(0.0, 1.0, 0.0, 1.0), 100, 100, true, 150, 150));
-        lightList.add(new Light(new Color(1.0, 0.0, 0.0, 1.0), 125, 125, true, 150, 150));
+        pane.getChildren().add(iv);
+        ImageView lights = new ImageView();
+        lights.setFitHeight(300);
+        lights.setFitWidth(300);
+        pane.getChildren().add(lights);
 
-        Pane p = new Pane(iv, lightPane);
+        base = createImage(new Color(0.0, 0.0, 0.0, 0.7), size, size);
+        baseArray = imageArray(base);
+
+        lightList.add(new Light(300, 300, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100));
+        lightList.add(new Light(150, 150, new Color(0.0, 1.0, 0.0, 1.0), 100, 0, 100, 200));
+        lightList.add(new Light(150, 150, new Color(1.0, 0.0, 0.0, 1.0), 100, 0, 200, 100));
+
         AnimationTimer timer = new Update();
-        //timer.start();
-        int[] temp = background.getLightImageMatrix();
-        //temp = stitchImages(background, lightList.get(0));
-        temp = stitchArrays(temp, lightList.get(0).getLightImageMatrix(), lightList.get(0).getX(), lightList.get(0).getY(), 300, lightList.get(0).getWidth());
-        temp = stitchArrays(temp, lightList.get(1).getLightImageMatrix(), lightList.get(1).getX(), lightList.get(1).getY(), 300, lightList.get(1).getWidth());
-        lightPane.getChildren().add(new ImageView(arrayToImage(temp, 300, 300)));
-        //lightPane.getChildren().add(new ImageView(arrayToImage(background.getLightImageMatrix(), 300, 300)));
+        timer.start();
+//        WritableImage wi1 = imageGradientToBlack(new Color(0.0, 0.0, 1.0, 1.0), 150, 150, 100, 0.0);
+//        WritableImage wi2 = imageGradientToBlack(new Color(0.0, 1.0, 0.0, 1.0), 300, 300, 100, 0.0);
+//        WritableImage wi3 = imageGradientToBlack(new Color(1.0, 0.0, 0.0, 1.0), 150, 150, 100, 0.0);
 
-        Scene scene = new Scene(p);
+//        ImageProcessingKernel ipk = new ImageProcessingKernel(imageArray(base), lightList.get(0).getImage(), lightList.get(0).getXOffset(), lightList.get(0).getYOffset());
+//        ipk.execute(lightList.get(0).getRange());
+//        ipk.assignWorkload(ipk.results(), lightList.get(1).getImage(), lightList.get(1).getXOffset(), lightList.get(1).getYOffset());
+//        ipk.execute(lightList.get(1).getRange());
+//        ipk.assignWorkload(ipk.results(), lightList.get(2).getImage(), lightList.get(2).getXOffset(), lightList.get(2).getYOffset());
+//        ipk.execute(lightList.get(2).getRange());
+
+
+//        //make more efficient in the future by looping around the overlay images bounds rather than the bases, and translate the x and y to the base instead of the overlay
+//        //make also more efficient by caching each of the 3d arrays of the pictures once.
+//        Range range = Range.create(150*150, 100);
+//        ImageProcessingKernel ipk = new ImageProcessingKernel(imageArray(base), imageArray(wi1), -100, 50);
+//        ipk.execute(range);
+//        range = Range.create(300*300, 100);
+//        ipk.assignWorkload(ipk.results(), imageArray(wi2), 50, 50);
+//        ipk.execute(range);
+//        range = Range.create(150*150, 100);
+//        ipk.assignWorkload(ipk.results(), imageArray(wi3), 75, 100);
+//        ipk.execute(range);
+
+        Scene scene = new Scene(pane);
         stage.setScene(scene);
         stage.show();
-    }
-
-    private int[] stitchArrays (int[] base, int[] overlay, int a, int b, int baseWidth, int overlayWidth) {
-        int x, y, u, v;
-        int[] result = base;
-        //System.out.println(result.length + "  " + overlay.getLightImageMatrix().length);
-
-        for (int c = 0; c < base.length; c++) {
-            y = c % baseWidth;
-            x = c / baseWidth;
-            u = 4 * (( x + a ) + ( ( y + b ) * baseWidth));
-            v = 4 * ( x + ( y * overlayWidth));
-//            if ((x < overlay.getX() && x > base.getWidth()) || (y < 100 && y > 300)) {
-//                continue;
-//            }
-            if (x > overlayWidth) {
-                continue;
-            }
-            try {
-                if (c < 4) {
-                    //System.out.println(u + "  " +v);
-                }
-                result[u] = Math.max(Math.min(base[u], overlay[v]), shadowLevel);
-                result[u+1] = Math.max(base[u+1], overlay[v+1]);
-                result[u+2] = Math.max(base[u+2], overlay[v+2]);
-                result[u+3] = Math.max(base[u+3], overlay[v+3]);
-//                System.out.println(base.lightImageMatrix[u] + "  " + base.lightImageMatrix[u+1] + "  " + base.lightImageMatrix[u+2] + "  " + base.lightImageMatrix[u+3]);
-//                System.out.println(overlay.lightImageMatrix[v] + "  " + overlay.lightImageMatrix[v+1] + "  " + overlay.lightImageMatrix[v+2] + "  " + overlay.lightImageMatrix[v+3]);
-//                System.out.println(result[u] + "  " + result[u+1] + "  " + result[u+1] + "  " + result[u+1]);
-
-            }
-            catch (Exception e) {
-                continue;
-            }
-        }
-
-//        for (int e = 0; e < result.length; e+=4) {
-//            System.out.println("color values: Alpha - " + result[e] + "  Red - " + result[e+1] + "  Blue - " + result[e+2] + "  Green - " + result[e+3]);
-//        }
-        return result;
-    }
-
-    private int[] stitchImages (Light base, Light overlay) {
-        int x, y, u, v;
-        int[] result = new int[base.lightImageMatrix.length];
-        //System.out.println(result.length + "  " + overlay.getLightImageMatrix().length);
-
-        for (int c = 0; c < base.lightImageMatrix.length; c++) {
-            y = c % base.getWidth();
-            x = c / base.getWidth();
-            u = 4 * (( x + overlay.getX() ) + ( ( y + overlay.getY() ) * base.getWidth()));
-            v = 4 * ( x + ( y * overlay.getWidth()));
-//            if ((x < overlay.getX() && x > base.getWidth()) || (y < 100 && y > 300)) {
-//                continue;
-//            }
-            if (x > overlay.getWidth()) {
-                continue;
-            }
-            try {
-                if (c < 4) {
-                    //System.out.println(u + "  " +v);
-                }
-                result[u] = Math.max(Math.min(base.lightImageMatrix[u], overlay.lightImageMatrix[v]), shadowLevel);
-                result[u+1] = Math.max(base.lightImageMatrix[u+1], overlay.lightImageMatrix[v+1]);
-                result[u+2] = Math.max(base.lightImageMatrix[u+2], overlay.lightImageMatrix[v+2]);
-                result[u+3] = Math.max(base.lightImageMatrix[u+3], overlay.lightImageMatrix[v+3]);
-//                System.out.println(base.lightImageMatrix[u] + "  " + base.lightImageMatrix[u+1] + "  " + base.lightImageMatrix[u+2] + "  " + base.lightImageMatrix[u+3]);
-//                System.out.println(overlay.lightImageMatrix[v] + "  " + overlay.lightImageMatrix[v+1] + "  " + overlay.lightImageMatrix[v+2] + "  " + overlay.lightImageMatrix[v+3]);
-//                System.out.println(result[u] + "  " + result[u+1] + "  " + result[u+1] + "  " + result[u+1]);
-
-            }
-            catch (Exception e) {
-                continue;
-            }
-        }
-
-//        for (int e = 0; e < result.length; e+=4) {
-//            System.out.println("color values: Alpha - " + result[e] + "  Red - " + result[e+1] + "  Blue - " + result[e+2] + "  Green - " + result[e+3]);
-//        }
-        return result;
     }
 
     private WritableImage createImage (Color c, int width, int height) {
@@ -203,50 +149,28 @@ public class App extends Application {
         return wi;
     }
 
-    public static Image arrayToImage (int[] info, int height, int width) {
-        WritableImage wi = new WritableImage(width, height);
-        int b = 0;
-        int u;
-        for (int x = 0; x < width; x++) {
-            //System.out.println(x + " color values: Alpha - " + info[b] + "  Red - " + info[b+1] + "  Green - " + info[b+2] + "  Blue - " + + info[b+3]);
-            for (int y = 0; y < height; y++) {
-                wi.getPixelWriter().setArgb(x, y, (info[b]<<24) | (info[b+1]<<16) | (info[b+2]<<8) | info[b+3]);
-                //System.out.println(x + "  " + y + " color values: Alpha - " + info[b] + "  Red - " + info[b+1] + "  Green - " + info[b+2] + "  Blue - " + info[b+3]);
-                b+=4;
+    public static Image arrayToImage (int[][][] info) {
+        WritableImage wi = new WritableImage(info.length, info[0].length);
+        for (int a = 0; a < wi.getWidth(); a++) {
+            for (int b = 0; b < wi.getHeight(); b++) {
+                wi.getPixelWriter().setArgb(a, b, (info[a][b][0] << 24) | (info[a][b][1] << 16) | (info[a][b][2] << 8) | (info[a][b][3]));
             }
         }
         return wi;
     }
 
-    public static int[] imageArray(WritableImage wi, int width, int height) {
-        int[] pixelArray = new int[(int) (wi.getWidth() * wi.getHeight() * 4)];
-        int c = 0;
-        int d = 0;
-        //System.out.println(pixelArray.length);
-        for (int a = 0; a < (width * height); a++) {
-            c = wi.getPixelReader().getArgb(a/width, a%height);
-            pixelArray[d] = ((c >> 24) & 0xff);
-            pixelArray[d+1] = ((c >> 16) & 0xff);
-            pixelArray[d+2] = ((c >> 8) & 0xff);
-            pixelArray[d+3] = (c & 0xff);
-            d+=4;
-
-            //System.out.println(pixelArray[a]);
+    public static int[][][] imageArray(WritableImage wi) {
+        int[][][] pixelArray = new int[(int) wi.getWidth()][(int) wi.getHeight()][4];
+        int c;
+        for (int a = 0; a < wi.getWidth(); a++) {
+            for (int b = 0; b < wi.getHeight(); b++) {
+                c = wi.getPixelReader().getArgb(a, b);
+                pixelArray[a][b][0] = ((c >> 24) & 0xff);
+                pixelArray[a][b][1] = ((c >> 16) & 0xff);
+                pixelArray[a][b][2] = ((c >> 8) & 0xff);
+                pixelArray[a][b][3] = (c & 0xff);
+            }
         }
-//        int[][][] pixelArray = new int[(int) wi.getWidth()][(int) wi.getHeight()][4];
-//        int c;
-//        for (int a = 0; a < wi.getWidth(); a++) {
-//            for (int b = 0; b < wi.getHeight(); b++) {
-//                c = wi.getPixelReader().getArgb(a, b);
-//                pixelArray[a][b][0] = ((c >> 24) & 0xff);
-//                pixelArray[a][b][1] = ((c >> 16) & 0xff);
-//                pixelArray[a][b][2] = ((c >> 8) & 0xff);
-//                pixelArray[a][b][3] = (c & 0xff);
-//            }
-//        }
-//        for (int b = 0; b < pixelArray.length; b+=4) {
-//            System.out.println(pixelArray[b] + "  " + pixelArray[b+1] + "  " + pixelArray[b+2] + "  " + pixelArray[b+3]);
-//        }
         return pixelArray;
     }
 }
