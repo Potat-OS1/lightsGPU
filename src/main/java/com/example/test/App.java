@@ -20,6 +20,7 @@ public class App extends Application {
     public static int shadowLevel = 178;
     public static ArrayList<Light> lightList = new ArrayList<>();
     public static int[][][] baseArray;
+    public static int[] baseFlattenedArray;
     public static WritableImage base;
     public static Pane pane = new Pane();
 
@@ -41,40 +42,49 @@ public class App extends Application {
 
         base = createImage(new Color(0.0, 0.0, 0.0, 0.7), size, size);
         baseArray = imageArray(base);
+        baseFlattenedArray = flattenArray(baseArray, 300, 300, 4);
 
-        lightList.add(new Light(300, 300, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100));
-        lightList.add(new Light(150, 150, new Color(0.0, 1.0, 0.0, 1.0), 100, 0, 100, 200));
-        lightList.add(new Light(150, 150, new Color(1.0, 0.0, 0.0, 1.0), 100, 0, 200, 100));
+        lightList.add(new Light(300, 300, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100, false));
+        lightList.add(new Light(150, 150, new Color(0.0, 1.0, 0.0, 1.0), 100, 0, 100, 200, false));
+        lightList.add(new Light(150, 150, new Color(1.0, 0.0, 0.0, 1.0), 100, 0, 200, 100, false));
 
         AnimationTimer timer = new Update();
         timer.start();
-//        WritableImage wi1 = imageGradientToBlack(new Color(0.0, 0.0, 1.0, 1.0), 150, 150, 100, 0.0);
-//        WritableImage wi2 = imageGradientToBlack(new Color(0.0, 1.0, 0.0, 1.0), 300, 300, 100, 0.0);
-//        WritableImage wi3 = imageGradientToBlack(new Color(1.0, 0.0, 0.0, 1.0), 150, 150, 100, 0.0);
-
-//        ImageProcessingKernel ipk = new ImageProcessingKernel(imageArray(base), lightList.get(0).getImage(), lightList.get(0).getXOffset(), lightList.get(0).getYOffset());
-//        ipk.execute(lightList.get(0).getRange());
-//        ipk.assignWorkload(ipk.results(), lightList.get(1).getImage(), lightList.get(1).getXOffset(), lightList.get(1).getYOffset());
-//        ipk.execute(lightList.get(1).getRange());
-//        ipk.assignWorkload(ipk.results(), lightList.get(2).getImage(), lightList.get(2).getXOffset(), lightList.get(2).getYOffset());
-//        ipk.execute(lightList.get(2).getRange());
-
-
-//        //make more efficient in the future by looping around the overlay images bounds rather than the bases, and translate the x and y to the base instead of the overlay
-//        //make also more efficient by caching each of the 3d arrays of the pictures once.
-//        Range range = Range.create(150*150, 100);
-//        ImageProcessingKernel ipk = new ImageProcessingKernel(imageArray(base), imageArray(wi1), -100, 50);
-//        ipk.execute(range);
-//        range = Range.create(300*300, 100);
-//        ipk.assignWorkload(ipk.results(), imageArray(wi2), 50, 50);
-//        ipk.execute(range);
-//        range = Range.create(150*150, 100);
-//        ipk.assignWorkload(ipk.results(), imageArray(wi3), 75, 100);
-//        ipk.execute(range);
 
         Scene scene = new Scene(pane);
         stage.setScene(scene);
         stage.show();
+    }
+
+    public static Image arrayToImage (int[] info, int height, int width) {
+        WritableImage wi = new WritableImage(width, height);
+        int b = 0;
+        for (int x = 0; x < width; x++) {
+            //System.out.println(x + " color values: Alpha - " + info[b] + "  Red - " + info[b+1] + "  Green - " + info[b+2] + "  Blue - " + + info[b+3]);
+            for (int y = 0; y < height; y++) {
+                wi.getPixelWriter().setArgb(x, y, (info[b]<<24) | (info[b+1]<<16) | (info[b+2]<<8) | info[b+3]);
+                //System.out.println(x + "  " + y + " color values: Alpha - " + info[b] + "  Red - " + info[b+1] + "  Green - " + info[b+2] + "  Blue - " + info[b+3]);
+                b+=4;
+            }
+        }
+        return wi;
+    }
+
+    public static int[] flattenArray(int[][][] arr, int width, int height, int depth) {
+        int flattenedSize = width * height * depth;
+        int[] flattenedArray = new int[flattenedSize];
+        int index = 0;
+
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                for (int k = 0; k < depth; k++) {
+                    flattenedArray[index] = arr[i][j][k];
+                    index++;
+                }
+            }
+        }
+
+        return flattenedArray;
     }
 
     private WritableImage createImage (Color c, int width, int height) {
@@ -144,16 +154,6 @@ public class App extends Application {
                     pw.setColor(x, y, new Color(red, green, blue, alpha));
                 }
 
-            }
-        }
-        return wi;
-    }
-
-    public static Image arrayToImage (int[][][] info) {
-        WritableImage wi = new WritableImage(info.length, info[0].length);
-        for (int a = 0; a < wi.getWidth(); a++) {
-            for (int b = 0; b < wi.getHeight(); b++) {
-                wi.getPixelWriter().setArgb(a, b, (info[a][b][0] << 24) | (info[a][b][1] << 16) | (info[a][b][2] << 8) | (info[a][b][3]));
             }
         }
         return wi;

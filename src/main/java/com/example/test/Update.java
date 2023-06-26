@@ -5,26 +5,24 @@ import javafx.scene.image.ImageView;
 
 public class Update extends AnimationTimer {
     private long lastUpdate;
-    int a = 0;
-    ImageProcessingKernel ipk = new ImageProcessingKernel(App.shadowLevel);
+    ImageProcessingKernel ipk = new ImageProcessingKernel(App.baseFlattenedArray.clone(), (int) App.base.getWidth(), (int) App.base.getHeight());
 
     @Override
     public void handle (long now) {
-        if (now - lastUpdate >= 8_666_666) {
-            ipk.setResult(App.imageArray(App.base));
+        if (now - lastUpdate >= 12_666_666) {
+            ipk.reset(App.baseFlattenedArray.clone(), (int) App.base.getWidth(), (int) App.base.getHeight());
             for (Light light : App.lightList) {
-                ipk.assignWorkload(ipk.results(), light.getImage(), light.getXOffset(), light.getYOffset());
+                ipk.addOverlay(light.getFlattenedImage(), light.width, light.height, light.getXOffset(), light.getYOffset());
                 ipk.execute(light.getRange());
-                //light.setXOffset(light.getXOffset()-1);
+                if (light.mouseControlled) {
+
+                }
+                //light.setXOffset(light.getXOffset() - 1);
             }
-            ((ImageView) App.pane.getChildren().get(1)).setImage(App.arrayToImage(ipk.results()));
+            ImageView iv = new ImageView(App.arrayToImage(ipk.getImage(), 300, 300));
+            App.pane.getChildren().set(1, iv);
             System.out.println(now - lastUpdate);
             lastUpdate = now;
-            a++;
-            if (a > 200) {
-                System.gc();
-                a = 0;
-            }
         }
     }
 }
