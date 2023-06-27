@@ -25,8 +25,8 @@ public class ImageProcessingKernel extends Kernel {
         this.overlay = overlay;
         this.overlayWidth = overlayWidth;
         this.overlayHeight = overlayHeight;
-        a = xOffset;
-        b = yOffset;
+        a = yOffset;
+        b = xOffset;
     }
 
     public void reset (int[] base, int baseWidth, int baseHeight) {
@@ -34,7 +34,6 @@ public class ImageProcessingKernel extends Kernel {
         this.baseWidth = baseWidth;
         this.baseHeight = baseHeight;
     }
-
 
     @Override
     public void run() {
@@ -54,8 +53,11 @@ public class ImageProcessingKernel extends Kernel {
         int v = 4 * (x + (y * overlayWidth));
 
         base[u] = Math.min(Math.max(base[u], overlay[v]), shadowLevel);
-        for (int z = 1; z < 4; z++) {
-            base[u+z] = Math.max(base[u+z], overlay[v+z]);
-        }
+        base[u+1] = Math.max(base[u+1], overlay[v+1]);
+        base[u+2] = Math.max(base[u+2], overlay[v+2]);
+        base[u+3] = Math.max(base[u+3], overlay[v+3]);
+//        for (int z = 1; z < 4; z++) {
+//            base[u+z] = Math.max(base[u+z], overlay[v+z]);
+//        }
     }
 }

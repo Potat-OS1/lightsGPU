@@ -1,12 +1,15 @@
 package com.example.test;
 
+import com.example.test.lighttype.RadialLight;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.geometry.Point2D;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -16,14 +19,17 @@ import java.util.Objects;
 
 
 public class App extends Application {
-    int size = 300;
-    public static int shadowLevel = 178;
+    public static int size = 900;
+    public static int shadowLevel = 118;
     public static ArrayList<Light> lightList = new ArrayList<>();
     public static int[][][] baseArray;
     public static int[] baseFlattenedArray;
     public static WritableImage base;
     public static Pane pane = new Pane();
-
+    public static int mouseX, mouseY;
+    public static Pane rayPane = new Pane();
+    public static Pane lightPane = new Pane();
+    public static ArrayList<Obstacle> objList = new ArrayList<>();
 
     public static void main (String[] args) {
         launch(args);
@@ -32,28 +38,31 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         ImageView iv = new ImageView(new Image(Objects.requireNonNull(App.class.getResourceAsStream("/image.jpg"))));
-        iv.setFitHeight(300);
-        iv.setFitWidth(300);
+        iv.setFitHeight(size);
+        iv.setFitWidth(size);
         pane.getChildren().add(iv);
         ImageView lights = new ImageView();
-        lights.setFitHeight(300);
-        lights.setFitWidth(300);
-        pane.getChildren().add(lights);
+        lights.setFitHeight(size);
+        lights.setFitWidth(size);
+        pane.getChildren().addAll(lights, rayPane, lightPane);
 
-        base = createImage(new Color(0.0, 0.0, 0.0, 0.7), size, size);
+        base = createImage(new Color(0.0, 0.0, 0.0, shadowLevel/255.0), size, size);
         baseArray = imageArray(base);
-        baseFlattenedArray = flattenArray(baseArray, 300, 300, 4);
+        baseFlattenedArray = flattenArray(baseArray, size, size, 4);
 
-        lightList.add(new Light(300, 300, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100, false));
-        lightList.add(new Light(150, 150, new Color(0.0, 1.0, 0.0, 1.0), 100, 0, 100, 200, false));
-        lightList.add(new Light(150, 150, new Color(1.0, 0.0, 0.0, 1.0), 100, 0, 200, 100, false));
-
+        lightList.add(new RadialLight(200, 200, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100, true, 100, 75));
+        //lightList.add(new Light(150, 150, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100, true));
+        //lightList.add(new Light(150, 150, new Color(0.0, 1.0, 0.0, 1.0), 100, 0, 100, 200, false));
+        //lightList.add(new Light(150, 150, new Color(1.0, 0.0, 0.0, 1.0), 100, 0, 200, 100, false));
         AnimationTimer timer = new Update();
         timer.start();
 
         Scene scene = new Scene(pane);
         stage.setScene(scene);
         stage.show();
+
+        obstacles(rayPane);
+        mouseTracking(scene);
     }
 
     public static Image arrayToImage (int[] info, int height, int width) {
@@ -87,7 +96,7 @@ public class App extends Application {
         return flattenedArray;
     }
 
-    private WritableImage createImage (Color c, int width, int height) {
+    public static WritableImage createImage (Color c, int width, int height) {
         WritableImage wi = new WritableImage(width, height);
         for (int a = 0; a < width; a++) {
             for (int b = 0; b < height; b++) {
@@ -172,5 +181,49 @@ public class App extends Application {
             }
         }
         return pixelArray;
+    }
+
+    private void mouseTracking (Scene scene) {
+        scene.addEventFilter(MouseEvent.MOUSE_MOVED, e -> {
+            mouseX = (int) e.getX();
+            mouseY = (int) e.getY();
+        });
+    }
+
+    private void obstacles (Pane p) {
+        Point2D[] points1 = {
+                new Point2D(100,200),
+                new Point2D(150, 250),
+                new Point2D(200,200),
+                new Point2D(200,100),
+                new Point2D(100,100),
+        };
+        Obstacle obs1 = new Obstacle(points1, Color.RED);
+        objList.add(obs1);
+        obs1.getObs().setOpacity(.5);
+        p.getChildren().add(obs1.getObs());
+
+        Point2D[] points2 = {
+                new Point2D(300,400),
+                new Point2D(350, 450),
+                new Point2D(400,400),
+                new Point2D(400,300),
+                new Point2D(300,300),
+        };
+        Obstacle obs2 = new Obstacle(points2, Color.RED);
+        objList.add(obs2);
+        obs2.getObs().setOpacity(.5);
+        p.getChildren().add(obs2.getObs());
+
+        Point2D[] points3 = {
+                new Point2D(500, 800),
+                new Point2D(500, 0),
+                new Point2D(550, 0),
+                new Point2D(550, 800),
+        };
+        Obstacle obs3 = new Obstacle(points3, Color.RED);
+        objList.add(obs3);
+        obs3.getObs().setOpacity(.5);
+        p.getChildren().add(obs3.getObs());
     }
 }
