@@ -1,12 +1,15 @@
 package com.example.test;
 
+import com.example.test.lighttype.RadialLight;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.geometry.Point2D;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -16,13 +19,17 @@ import java.util.Objects;
 
 
 public class App extends Application {
-    int size = 300;
-    public static int shadowLevel = 178;
+    public static int size = 900;
+    public static int shadowLevel = 118;
     public static ArrayList<Light> lightList = new ArrayList<>();
     public static int[][][] baseArray;
+    public static int[] baseFlattenedArray;
     public static WritableImage base;
     public static Pane pane = new Pane();
-
+    public static int mouseX, mouseY;
+    public static Pane rayPane = new Pane();
+    public static Pane lightPane = new Pane();
+    public static ArrayList<Obstacle> objList = new ArrayList<>();
 
     public static void main (String[] args) {
         launch(args);
@@ -31,53 +38,65 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         ImageView iv = new ImageView(new Image(Objects.requireNonNull(App.class.getResourceAsStream("/image.jpg"))));
-        iv.setFitHeight(300);
-        iv.setFitWidth(300);
+        iv.setFitHeight(size);
+        iv.setFitWidth(size);
         pane.getChildren().add(iv);
         ImageView lights = new ImageView();
-        lights.setFitHeight(300);
-        lights.setFitWidth(300);
-        pane.getChildren().add(lights);
+        lights.setFitHeight(size);
+        lights.setFitWidth(size);
+        pane.getChildren().addAll(lights, rayPane, lightPane);
 
-        base = createImage(new Color(0.0, 0.0, 0.0, 0.7), size, size);
+        base = createImage(new Color(0.0, 0.0, 0.0, shadowLevel/255.0), size, size);
         baseArray = imageArray(base);
+        baseFlattenedArray = flattenArray(baseArray, size, size, 4);
 
-        lightList.add(new Light(300, 300, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100));
-        lightList.add(new Light(150, 150, new Color(0.0, 1.0, 0.0, 1.0), 100, 0, 100, 200));
-        lightList.add(new Light(150, 150, new Color(1.0, 0.0, 0.0, 1.0), 100, 0, 200, 100));
-
+        lightList.add(new RadialLight(200, 200, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100, true, 100, 75));
+        //lightList.add(new Light(150, 150, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100, true));
+        //lightList.add(new Light(150, 150, new Color(0.0, 1.0, 0.0, 1.0), 100, 0, 100, 200, false));
+        //lightList.add(new Light(150, 150, new Color(1.0, 0.0, 0.0, 1.0), 100, 0, 200, 100, false));
         AnimationTimer timer = new Update();
         timer.start();
-//        WritableImage wi1 = imageGradientToBlack(new Color(0.0, 0.0, 1.0, 1.0), 150, 150, 100, 0.0);
-//        WritableImage wi2 = imageGradientToBlack(new Color(0.0, 1.0, 0.0, 1.0), 300, 300, 100, 0.0);
-//        WritableImage wi3 = imageGradientToBlack(new Color(1.0, 0.0, 0.0, 1.0), 150, 150, 100, 0.0);
-
-//        ImageProcessingKernel ipk = new ImageProcessingKernel(imageArray(base), lightList.get(0).getImage(), lightList.get(0).getXOffset(), lightList.get(0).getYOffset());
-//        ipk.execute(lightList.get(0).getRange());
-//        ipk.assignWorkload(ipk.results(), lightList.get(1).getImage(), lightList.get(1).getXOffset(), lightList.get(1).getYOffset());
-//        ipk.execute(lightList.get(1).getRange());
-//        ipk.assignWorkload(ipk.results(), lightList.get(2).getImage(), lightList.get(2).getXOffset(), lightList.get(2).getYOffset());
-//        ipk.execute(lightList.get(2).getRange());
-
-
-//        //make more efficient in the future by looping around the overlay images bounds rather than the bases, and translate the x and y to the base instead of the overlay
-//        //make also more efficient by caching each of the 3d arrays of the pictures once.
-//        Range range = Range.create(150*150, 100);
-//        ImageProcessingKernel ipk = new ImageProcessingKernel(imageArray(base), imageArray(wi1), -100, 50);
-//        ipk.execute(range);
-//        range = Range.create(300*300, 100);
-//        ipk.assignWorkload(ipk.results(), imageArray(wi2), 50, 50);
-//        ipk.execute(range);
-//        range = Range.create(150*150, 100);
-//        ipk.assignWorkload(ipk.results(), imageArray(wi3), 75, 100);
-//        ipk.execute(range);
 
         Scene scene = new Scene(pane);
         stage.setScene(scene);
         stage.show();
+
+        obstacles(rayPane);
+        mouseTracking(scene);
     }
 
-    private WritableImage createImage (Color c, int width, int height) {
+    public static Image arrayToImage (int[] info, int height, int width) {
+        WritableImage wi = new WritableImage(width, height);
+        int b = 0;
+        for (int x = 0; x < width; x++) {
+            //System.out.println(x + " color values: Alpha - " + info[b] + "  Red - " + info[b+1] + "  Green - " + info[b+2] + "  Blue - " + + info[b+3]);
+            for (int y = 0; y < height; y++) {
+                wi.getPixelWriter().setArgb(x, y, (info[b]<<24) | (info[b+1]<<16) | (info[b+2]<<8) | info[b+3]);
+                //System.out.println(x + "  " + y + " color values: Alpha - " + info[b] + "  Red - " + info[b+1] + "  Green - " + info[b+2] + "  Blue - " + info[b+3]);
+                b+=4;
+            }
+        }
+        return wi;
+    }
+
+    public static int[] flattenArray(int[][][] arr, int width, int height, int depth) {
+        int flattenedSize = width * height * depth;
+        int[] flattenedArray = new int[flattenedSize];
+        int index = 0;
+
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                for (int k = 0; k < depth; k++) {
+                    flattenedArray[index] = arr[i][j][k];
+                    index++;
+                }
+            }
+        }
+
+        return flattenedArray;
+    }
+
+    public static WritableImage createImage (Color c, int width, int height) {
         WritableImage wi = new WritableImage(width, height);
         for (int a = 0; a < width; a++) {
             for (int b = 0; b < height; b++) {
@@ -149,16 +168,6 @@ public class App extends Application {
         return wi;
     }
 
-    public static Image arrayToImage (int[][][] info) {
-        WritableImage wi = new WritableImage(info.length, info[0].length);
-        for (int a = 0; a < wi.getWidth(); a++) {
-            for (int b = 0; b < wi.getHeight(); b++) {
-                wi.getPixelWriter().setArgb(a, b, (info[a][b][0] << 24) | (info[a][b][1] << 16) | (info[a][b][2] << 8) | (info[a][b][3]));
-            }
-        }
-        return wi;
-    }
-
     public static int[][][] imageArray(WritableImage wi) {
         int[][][] pixelArray = new int[(int) wi.getWidth()][(int) wi.getHeight()][4];
         int c;
@@ -172,5 +181,49 @@ public class App extends Application {
             }
         }
         return pixelArray;
+    }
+
+    private void mouseTracking (Scene scene) {
+        scene.addEventFilter(MouseEvent.MOUSE_MOVED, e -> {
+            mouseX = (int) e.getX();
+            mouseY = (int) e.getY();
+        });
+    }
+
+    private void obstacles (Pane p) {
+        Point2D[] points1 = {
+                new Point2D(100,200),
+                new Point2D(150, 250),
+                new Point2D(200,200),
+                new Point2D(200,100),
+                new Point2D(100,100),
+        };
+        Obstacle obs1 = new Obstacle(points1, Color.RED);
+        objList.add(obs1);
+        obs1.getObs().setOpacity(.5);
+        p.getChildren().add(obs1.getObs());
+
+        Point2D[] points2 = {
+                new Point2D(300,400),
+                new Point2D(350, 450),
+                new Point2D(400,400),
+                new Point2D(400,300),
+                new Point2D(300,300),
+        };
+        Obstacle obs2 = new Obstacle(points2, Color.RED);
+        objList.add(obs2);
+        obs2.getObs().setOpacity(.5);
+        p.getChildren().add(obs2.getObs());
+
+        Point2D[] points3 = {
+                new Point2D(500, 800),
+                new Point2D(500, 0),
+                new Point2D(550, 0),
+                new Point2D(550, 800),
+        };
+        Obstacle obs3 = new Obstacle(points3, Color.RED);
+        objList.add(obs3);
+        obs3.getObs().setOpacity(.5);
+        p.getChildren().add(obs3.getObs());
     }
 }
