@@ -1,11 +1,8 @@
 package com.example.test;
 
 import com.aparapi.Range;
-import javafx.geometry.Point2D;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
-
-import java.util.ArrayList;
 
 import static com.example.test.App.imageGradientToBlack;
 
@@ -24,9 +21,8 @@ public abstract class Light {
         this.width = width;
         this.height = height;
         wi = imageGradientToBlack(c, width, height, steps, deadPercent);
-        //wi = App.createImage(c, width, height);
         image = App.imageArray(wi);
-        range = Range.create(width*height, 100);
+        range = Range.create(width*height, 1);
         flattenedImage = App.flattenArray(image, width, height, 4);
         this.mouseControlled = mouseControlled;
     }
@@ -54,6 +50,4 @@ public abstract class Light {
     public int getYOffset () {
         return yOffset;
     }
-
-    public abstract ArrayList<Point2D> updateRays();
 }

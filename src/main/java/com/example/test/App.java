@@ -50,9 +50,9 @@ public class App extends Application {
         baseArray = imageArray(base);
         baseFlattenedArray = flattenArray(baseArray, size, size, 4);
 
-        lightList.add(new RadialLight(200, 200, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100, true, 100, 75));
-        //lightList.add(new Light(150, 150, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100, true));
-        //lightList.add(new Light(150, 150, new Color(0.0, 1.0, 0.0, 1.0), 100, 0, 100, 200, false));
+        lightList.add(new RadialLight(300, 300, new Color(0.0, 0.0, 1.0, 1.0), 100, 0, 100, 100, true, 100, 150));
+        lightList.add(new RadialLight(300, 300, new Color(0.0, 1.0, 0.0, 1.0), 100, 0, 0, 0, false, 72, 150));
+        lightList.add(new RadialLight(300, 300, new Color(1.0, 0.0, 0.0, 1.0), 100, 0, 0, 200, false, 72, 150));
         //lightList.add(new Light(150, 150, new Color(1.0, 0.0, 0.0, 1.0), 100, 0, 200, 100, false));
         AnimationTimer timer = new Update();
         timer.start();
@@ -183,6 +183,34 @@ public class App extends Application {
         return pixelArray;
     }
 
+    public static int[] image1DArray(WritableImage wi, int width, int height) {
+        int[] pixelArray = new int[(int) (width*height*4)];
+        int c;
+        int d = (int) Math.ceil((width - wi.getWidth())/2.0);
+        int e = (int) Math.ceil((height - wi.getHeight())/2.0);
+        int index = 0;
+        for (int a = 0; a < width; a++) {
+            for (int b = 0; b < height; b++) {
+                try {
+                    c = wi.getPixelReader().getArgb(a-d, b-e);
+                    pixelArray[index] = ((c >> 24) & 0xff);
+                    pixelArray[index+1] = ((c >> 16) & 0xff);
+                    pixelArray[index+2] = ((c >> 8) & 0xff);
+                    pixelArray[index+3] = (c & 0xff);
+                }
+                catch (Exception ex) {
+                    pixelArray[index] = 256;
+                    pixelArray[index+1] = 0;
+                    pixelArray[index+2] = 0;
+                    pixelArray[index+3] = 0;
+                }
+
+                index+=4;
+            }
+        }
+        return pixelArray;
+    }
+
     private void mouseTracking (Scene scene) {
         scene.addEventFilter(MouseEvent.MOUSE_MOVED, e -> {
             mouseX = (int) e.getX();
@@ -200,7 +228,7 @@ public class App extends Application {
         };
         Obstacle obs1 = new Obstacle(points1, Color.RED);
         objList.add(obs1);
-        obs1.getObs().setOpacity(.5);
+        obs1.getObs().setOpacity(0.1);
         p.getChildren().add(obs1.getObs());
 
         Point2D[] points2 = {
@@ -212,7 +240,7 @@ public class App extends Application {
         };
         Obstacle obs2 = new Obstacle(points2, Color.RED);
         objList.add(obs2);
-        obs2.getObs().setOpacity(.5);
+        obs2.getObs().setOpacity(0.1);
         p.getChildren().add(obs2.getObs());
 
         Point2D[] points3 = {
@@ -223,7 +251,7 @@ public class App extends Application {
         };
         Obstacle obs3 = new Obstacle(points3, Color.RED);
         objList.add(obs3);
-        obs3.getObs().setOpacity(.5);
+        obs3.getObs().setOpacity(0.1);
         p.getChildren().add(obs3.getObs());
     }
 }

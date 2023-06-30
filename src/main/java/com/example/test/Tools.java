@@ -37,10 +37,6 @@ public class Tools {
                 if (intersection != null) {
                     // Lines intersect
                     double distance = Math.abs(line.getStartX() - intersection.getX());
-//                    if (distance < 0) {
-//                        // Intersection is not on the line segment
-//                        distance = line.getEndX() - intersection.getX();
-//                    }
                     if (distance >= 0 && distance < shortestDistance) {
                         // Shortest intersection so far
                         shortestIntersection = intersection;

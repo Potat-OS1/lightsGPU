@@ -56,8 +56,5 @@ public class ImageProcessingKernel extends Kernel {
         base[u+1] = Math.max(base[u+1], overlay[v+1]);
         base[u+2] = Math.max(base[u+2], overlay[v+2]);
         base[u+3] = Math.max(base[u+3], overlay[v+3]);
-//        for (int z = 1; z < 4; z++) {
-//            base[u+z] = Math.max(base[u+z], overlay[v+z]);
-//        }
     }
 }
